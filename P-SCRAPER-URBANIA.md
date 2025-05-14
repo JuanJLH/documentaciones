@@ -1,5 +1,43 @@
 # Documentación Scraper Urbania
 
+## Índice
+- [Documentación Scraper Urbania](#documentación-scraper-urbania)
+  - [Índice](#índice)
+  - [Arquitectura General](#arquitectura-general)
+  - [Flujo de Trabajo del Motor de Scraping (main.py)](#flujo-de-trabajo-del-motor-de-scraping-mainpy)
+  - [Componentes del Motor de Scraping](#componentes-del-motor-de-scraping)
+  - [Flujo de la Interfaz de Usuario (app.py)](#flujo-de-la-interfaz-de-usuario-apppy)
+  - [Integración entre Componentes](#integración-entre-componentes)
+  - [Flujo de Procesamiento de Datos](#flujo-de-procesamiento-de-datos)
+  - [Uso del Sistema](#uso-del-sistema)
+    - [Modo CLI (main.py)](#modo-cli-mainpy)
+    - [Modo Interfaz Gráfica (app.py)](#modo-interfaz-gráfica-apppy)
+  - [Estructura de Archivos de Salida](#estructura-de-archivos-de-salida)
+  - [Requisitos del Sistema](#requisitos-del-sistema)
+    - [Navegador Requerido](#navegador-requerido)
+    - [Dependencias Principales](#dependencias-principales)
+    - [Instalación de Dependencias](#instalación-de-dependencias)
+    - [Requisitos de Hardware](#requisitos-de-hardware)
+  - [Manejo de Situaciones Especiales](#manejo-de-situaciones-especiales)
+    - [Detección de Anti-Bot y CAPTCHA](#detección-de-anti-bot-y-captcha)
+    - [Estrategias Anti-Detección](#estrategias-anti-detección)
+  - [Guía para Desarrolladores](#guía-para-desarrolladores)
+    - [Extender la Funcionalidad](#extender-la-funcionalidad)
+    - [Mejores Prácticas de Desarrollo](#mejores-prácticas-de-desarrollo)
+  - [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+    - [Éticas y Legales](#éticas-y-legales)
+    - [Técnicas](#técnicas)
+  - [Configuraciones Avanzadas](#configuraciones-avanzadas)
+    - [Parámetros Ajustables](#parámetros-ajustables)
+    - [Ejemplo: Configuración de Proxy](#ejemplo-configuración-de-proxy)
+  - [Preguntas Frecuentes (FAQ)](#preguntas-frecuentes-faq)
+    - [¿Cómo manejar bloqueos de Cloudflare?](#cómo-manejar-bloqueos-de-cloudflare)
+    - [¿Cómo extender para otros sitios inmobiliarios?](#cómo-extender-para-otros-sitios-inmobiliarios)
+    - [¿Es posible ejecutar en modo headless?](#es-posible-ejecutar-en-modo-headless)
+  - [Historial de Versiones y Actualizaciones](#historial-de-versiones-y-actualizaciones)
+    - [v1.0.0](#v100)
+    - [v1.1.0](#v110)
+
 Esta documentación describe el funcionamiento del scraper para el sitio web Urbania, compuesto por dos componentes principales:
 1. `main.py`: El motor de scraping principal
 2. `app.py`: La interfaz gráfica basada en WebView
@@ -51,8 +89,9 @@ flowchart TD
     
     subgraph "Proceso de extracción"
         extract[Extraer datos de tarjetas] --> process_cards[Procesar cada tarjeta]
-        process_cards --> extract_price[Extraer precio]
-        extract_price --> extract_location[Extraer ubicación]
+        process_cards --> extract_price[Extraer precio en soles y USD]
+        extract_price --> extract_maintenance[Extraer mantenimiento]
+        extract_maintenance --> extract_location[Extraer ubicación]
         extract_location --> extract_address[Extraer dirección exacta]
         extract_address --> extract_attrs[Extraer atributos]
         extract_attrs --> extract_url[Extraer URL]
@@ -74,10 +113,10 @@ classDiagram
     }
     
     class ComponentesExtraccion {
-        +extraer_titulo(tarjeta)
+        +extraer_precio(tarjeta) %% Ahora devuelve precio_texto, precio_soles y precio_usd
         +extraer_ubicacion(tarjeta)
         +extraer_descripcion(tarjeta)
-        +extraer_precio(tarjeta)
+        +extraer_mantenimiento(tarjeta)
         +extraer_atributos(tarjeta)
         +extraer_direccion_exacta(tarjeta)
         +extraer_url_publicacion(tarjeta)
@@ -175,7 +214,9 @@ flowchart LR
     dataframe --> excel[Exportar a Excel]
     
     subgraph "Datos extraídos"
-        price[Precio]
+        price_soles[Precio en soles]
+        price_usd[Precio en USD]
+        mantenimiento[Mantenimiento]
         location[Ubicación]
         address[Dirección exacta]
         description[Descripción]
@@ -183,7 +224,9 @@ flowchart LR
         url_prop[URL propiedad]
     end
     
-    datos --> price
+    datos --> price_soles
+    datos --> price_usd
+    datos --> mantenimiento
     datos --> location
     datos --> address
     datos --> description
@@ -225,6 +268,10 @@ La aplicación abrirá una ventana de navegador donde puede:
 
 ## Requisitos del Sistema
 
+### Navegador Requerido
+- **Google Chrome**: El sistema requiere tener instalada una versión reciente de Google Chrome (preferiblemente versión 90 o superior)
+- La aplicación utiliza ChromeDriver que se descarga automáticamente para coincidir con su versión de Chrome instalada
+
 ### Dependencias Principales
 ```mermaid
 graph TD
@@ -238,6 +285,8 @@ graph TD
     
     selenium --> chrome[Chrome Browser]
     uc --> chrome
+    
+    chrome -->|"Requiere"| installed[Chrome instalado en sistema]
 ```
 
 ### Instalación de Dependencias
@@ -249,6 +298,7 @@ pip install selenium beautifulsoup4 pandas undetected-chromedriver pywebview web
 - Mínimo 4GB RAM
 - Espacio en disco: 500MB para la aplicación y sus temporales
 - Conexión a internet
+- Navegador Google Chrome instalado en el sistema
 
 ## Manejo de Situaciones Especiales
 
