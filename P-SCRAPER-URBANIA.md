@@ -337,8 +337,10 @@ graph TB
         implementar --> integrar[Integrar en extraer_precios_pagina]
         integrar --> modificar[Actualizar Diccionario resultado]
     end
-    
-    subgraph "Agregar Compatibilidad con Sitio"
+```
+```mermaid
+graph TB
+    subgraph "Agregar Compatibilidad"
         analizar[Analizar Estructura DOM] --> identificar[Identificar Patrones]
         identificar --> adaptar[Adaptar Selectores]
         adaptar --> probar[Probar Extracción]
